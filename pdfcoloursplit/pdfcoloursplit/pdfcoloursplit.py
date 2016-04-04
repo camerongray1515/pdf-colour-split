@@ -1,33 +1,44 @@
 #!/usr/bin/env python3
-import subprocess
+import binascii
 
-def split_colour(filename, force_ps=False):
+def is_ppm_colour(filename):
     """
-        Takes in the filename of a PDF, returns a tuple containing a list of all
-        colour page numbers and a list containing all monochrome page numbers.
-
-        If force_ps is true, the PDF will be converted to PS before being passed
-        to gs.  This is useful for some PDF files which cause gs to segfault.
+        Takes in filename of PPM file and returns if it contains any colour
+        pixels or not.  Designed for PPM files produced by "pdftoppm" and
+        therefore does not handle comments in the PPM files.
     """
+    with open(filename, "rb") as f:
+        magic_number = f.readline().decode("UTF-8").split()[0]
+        width, height = f.readline().decode("UTF-8").split()
+        maxval = int(f.readline().decode("UTF-8").split()[0])
 
-    gs_args = ("-q -sDEVICE=pbmraw -o nul: -dUseFastColor=true "
-        "-dGrayDetection=true -c \"<</EndPage {exch pop 2 ne dup {mark "
-        "currentdevice //null .getdeviceparams .dicttomark exch pop "
-        "/pageneutralcolor get = flush} if} bind>> setpagedevice\" -f"
-    )
+        num_bytes = 1 if maxval < 256 else 2
+        # num_bytes=2
 
-    command = "pdf2ps {0} - | gs {1} -" if force_ps else "gs {1} {0}"
+        bs = f.read(num_bytes*3)
+        while bs:
+            # Takes list of num_bytes*3 bytes and converts it into a list of
+            # three components (one for each of RGB) each containing num_bytes
+            # bytes
+            if num_bytes == 1:
+                colour_values = bs
+            else:
+                colour_values = [bs[x:x+num_bytes] for x in range(0,
+                    num_bytes*3, num_bytes)]
 
-    output = subprocess.check_output(command.format(filename, gs_args), shell=True).decode("UTF-8")
+            r,g,b = colour_values
+            if not(r==g and g==b):
+                return True # We encountered a colour pixel so page is colour
 
-    for line in output.split("\n"):
-        print(line)
+            bs = f.read(num_bytes*3)
+
+        return False # No colour pixels were encoutered
 
 def main():
-    try:
-        split_colour("/tmp/twitter.pdf")
-    except Exception:
-        split_colour("/tmp/twitter.pdf", force_ps=True)
+    for i in range(0, 60):
+        num = str(i+1).zfill(2)
+        colour = is_ppm_colour("/tmp/pdf/report-{}.ppm".format(num))
+        print("Page {} is{}colour".format(num, " " if colour else " not "))
 
 if __name__ == "__main__":
     main()
