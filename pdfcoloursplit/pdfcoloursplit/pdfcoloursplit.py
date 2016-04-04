@@ -37,10 +37,53 @@ def is_page_colour(pdf_filename, page_number, dpi=10):
 
     return False # No colour pixels were encoutered
 
+def get_page_count(pdf_filename):
+    lines = subprocess.check_output(["/usr/bin/pdfinfo", pdf_filename]).decode(
+        "UTF-8").split("\n")
+    for line in lines:
+        if line.startswith("Pages:"):
+            return int(line.split()[1].strip())
+
+def detect_pages(pdf_filename, num_pages):
+    colour_pages = []
+    mono_pages = []
+
+    for i in range(1, num_pages+1):
+        if is_page_colour(pdf_filename, i):
+            colour_pages.append(i)
+        else:
+            mono_pages.append(i)
+
+    return (colour_pages, mono_pages)
+
+def move_pages(num_pages, colour_pages, mono_pages, duplex, stackable):
+    if duplex:
+        duplex_colour_pages = []
+        duplex_mono_pages = []
+        # If either side of a page is colour, put both sides into the colour
+        # list
+        for i in range(1, num_pages+1, 2):
+            if i in colour_pages or i+1 in colour_pages:
+                duplex_colour_pages += [i, i+1]
+            else:
+                duplex_mono_pages += [i, i+1]
+    else:
+        duplex_colour_pages = colour_pages
+        duplex_mono_pages = mono_pages
+
+    return (duplex_colour_pages, duplex_mono_pages)
+
+
 def main():
-    for i in range(1, 61):
-        colour = is_page_colour("/tmp/pdf/final_report.pdf", i)
-        print("Page {} is{}colour".format(i, " " if colour else " not "))
+    pdf_filename = "/tmp/pdf/final_report.pdf"
+    num_pages = get_page_count(pdf_filename)
+
+    colour, mono = detect_pages(pdf_filename, num_pages)
+    print((colour, mono))
+    print(move_pages(num_pages, colour, mono, True, True))
+    # for i in range(1, 62):
+    #     colour = is_page_colour("/tmp/pdf/final_report.pdf", i)
+    #     print("Page {} is{}colour".format(i, " " if colour else " not "))
 
 if __name__ == "__main__":
     main()
