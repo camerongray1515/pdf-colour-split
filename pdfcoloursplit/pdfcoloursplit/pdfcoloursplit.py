@@ -56,7 +56,7 @@ def detect_pages(pdf_filename, num_pages):
 
     return (colour_pages, mono_pages)
 
-def move_pages(num_pages, colour_pages, mono_pages, duplex, stackable):
+def get_file_structure(num_pages, colour_pages, mono_pages, duplex, stackable):
     if duplex:
         duplex_colour_pages = []
         duplex_mono_pages = []
@@ -71,7 +71,32 @@ def move_pages(num_pages, colour_pages, mono_pages, duplex, stackable):
         duplex_colour_pages = colour_pages
         duplex_mono_pages = mono_pages
 
-    return (duplex_colour_pages, duplex_mono_pages)
+    colour_files = []
+    mono_files = []
+
+    if stackable:
+        temp_pages = []
+        previous_classification = None
+        for i in range(1, num_pages+1):
+            classification = "colour" if i in duplex_colour_pages else "mono"
+            if classification != previous_classification and \
+                previous_classification != None:
+                if previous_classification == "colour":
+                    colour_files.append(temp_pages)
+                else:
+                    mono_files.append(temp_pages)
+                temp_pages = []
+            previous_classification = classification
+            temp_pages.append(i)
+        if previous_classification == "colour":
+            colour_files.append(temp_pages)
+        else:
+            mono_files.append(temp_pages)
+    else:
+        colour_files = duplex_colour_pages
+        mono_files = duplex_mono_pages
+
+    return (colour_files, mono_files)
 
 
 def main():
@@ -79,11 +104,7 @@ def main():
     num_pages = get_page_count(pdf_filename)
 
     colour, mono = detect_pages(pdf_filename, num_pages)
-    print((colour, mono))
-    print(move_pages(num_pages, colour, mono, True, True))
-    # for i in range(1, 62):
-    #     colour = is_page_colour("/tmp/pdf/final_report.pdf", i)
-    #     print("Page {} is{}colour".format(i, " " if colour else " not "))
+    print(get_file_structure(num_pages, colour, mono, True, True))
 
 if __name__ == "__main__":
     main()
