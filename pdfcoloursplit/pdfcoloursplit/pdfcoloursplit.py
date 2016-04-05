@@ -66,9 +66,9 @@ def get_file_structure(num_pages, colour_pages, mono_pages, duplex, stackable):
         # list
         for i in range(1, num_pages+1, 2):
             if i in colour_pages or i+1 in colour_pages:
-                duplex_colour_pages += [i, i+1]
+                duplex_colour_pages += [i, i+1] if i < num_pages else [i]
             else:
-                duplex_mono_pages += [i, i+1]
+                duplex_mono_pages += [i, i+1] if i < num_pages else [i]
     else:
         duplex_colour_pages = colour_pages
         duplex_mono_pages = mono_pages
