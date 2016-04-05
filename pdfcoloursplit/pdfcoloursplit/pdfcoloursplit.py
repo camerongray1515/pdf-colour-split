@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import subprocess
 import os
+import argparse
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
 def is_page_colour(pdf_filename, page_number, dpi=10):
@@ -94,8 +95,8 @@ def get_file_structure(num_pages, colour_pages, mono_pages, duplex, stackable):
         else:
             mono_files.append(temp_pages)
     else:
-        colour_files = duplex_colour_pages
-        mono_files = duplex_mono_pages
+        colour_files = [duplex_colour_pages]
+        mono_files = [duplex_mono_pages]
 
     return (colour_files, mono_files)
 
@@ -126,13 +127,26 @@ def write_output_files(pdf_filename, colour_files, mono_files):
 
         classification = "mono" if classification == "colour" else "colour"
 
-def main():
-    pdf_filename = "/tmp/pdf/final_report.pdf"
+def split_pdf(pdf_filename, duplex, stackable):
     num_pages = get_page_count(pdf_filename)
 
     colour, mono = detect_pages(pdf_filename, num_pages)
-    colour_f, mono_f = get_file_structure(num_pages, colour, mono, True, True)
-    write_output_files(pdf_filename, colour_f, mono_f)
+    c_file, m_file = get_file_structure(num_pages, colour, mono, duplex,
+        stackable)
+    write_output_files(pdf_filename, c_file, m_file)
+
+def main():
+    parser = argparse.ArgumentParser(description="Splits a PDF into colour and "
+        "monochrome pages")
+    parser.add_argument("--noduplex", action="store_false", dest="duplex",
+        help="Do not arrange pages to handle duplex (double sided) printing")
+    parser.add_argument("--nostack", action="store_false", dest="stackable",
+        help="Do not split output into several PDF files to aid stacking of "
+            "printed output")
+    parser.add_argument("input_file", help="PDF file to split", default=None)
+    args = parser.parse_args()
+
+    split_pdf(args.input_file, args.duplex, args.stackable)
 
 
 if __name__ == "__main__":
