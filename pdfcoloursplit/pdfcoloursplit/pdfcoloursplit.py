@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import subprocess
-from binascii import hexlify
+import os
+from PyPDF2 import PdfFileReader, PdfFileWriter
 
 def is_page_colour(pdf_filename, page_number, dpi=10):
     p = subprocess.Popen([
@@ -98,13 +99,41 @@ def get_file_structure(num_pages, colour_pages, mono_pages, duplex, stackable):
 
     return (colour_files, mono_files)
 
+def write_output_files(pdf_filename, colour_files, mono_files):
+    classification = "mono"
+    if len(colour_files) and 1 in colour_files[0]:
+        classification = "colour"
+
+    num_output_files = len(colour_files) + len(mono_files)
+    number_pad_amount = len(str(num_output_files)) # How much to zfill filename
+
+    base_filename = os.path.basename(pdf_filename)
+    if base_filename.lower().endswith(".pdf"):
+        base_filename = base_filename[:-4]
+
+    for i in range(1, num_output_files+1):
+        if classification == "colour":
+            pages = colour_files.pop(0)
+        else:
+            pages = mono_files.pop(0)
+
+        output_filename = "{}_{}_{}.pdf".format(base_filename, classification,
+            str(i).zfill(number_pad_amount))
+
+        subprocess.call("/usr/bin/pdftk {} cat {} output {}".format(
+            pdf_filename, " ".join(str(p) for p in pages), output_filename),
+            shell=True)
+
+        classification = "mono" if classification == "colour" else "colour"
 
 def main():
     pdf_filename = "/tmp/pdf/final_report.pdf"
     num_pages = get_page_count(pdf_filename)
 
     colour, mono = detect_pages(pdf_filename, num_pages)
-    print(get_file_structure(num_pages, colour, mono, True, True))
+    colour_f, mono_f = get_file_structure(num_pages, colour, mono, True, True)
+    write_output_files(pdf_filename, colour_f, mono_f)
+
 
 if __name__ == "__main__":
     main()
