@@ -2,7 +2,7 @@
 import subprocess
 import os
 import argparse
-from PyPDF2 import PdfFileReader, PdfFileWriter
+import shlex
 
 def is_page_colour(pdf_filename, page_number, dpi=10):
     p = subprocess.Popen([
@@ -122,8 +122,8 @@ def write_output_files(pdf_filename, colour_files, mono_files):
             str(i).zfill(number_pad_amount))
 
         subprocess.call("/usr/bin/pdftk {} cat {} output {}".format(
-            pdf_filename, " ".join(str(p) for p in pages), output_filename),
-            shell=True)
+            shlex.quote(pdf_filename), " ".join(str(p) for p in pages),
+            shlex.quote(output_filename)), shell=True)
 
         classification = "mono" if classification == "colour" else "colour"
 
