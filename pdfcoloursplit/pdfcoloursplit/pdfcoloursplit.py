@@ -108,6 +108,8 @@ def write_output_files(pdf_filename, colour_files, mono_files):
     num_output_files = len(colour_files) + len(mono_files)
     number_pad_amount = len(str(num_output_files)) # How much to zfill filename
 
+    files_written = []
+
     base_filename = os.path.basename(pdf_filename)
     if base_filename.lower().endswith(".pdf"):
         base_filename = base_filename[:-4]
@@ -125,7 +127,11 @@ def write_output_files(pdf_filename, colour_files, mono_files):
             shlex.quote(pdf_filename), " ".join(str(p) for p in pages),
             shlex.quote(output_filename)), shell=True)
 
+        files_written.append(output_filename)
+
         classification = "mono" if classification == "colour" else "colour"
+
+    return files_written
 
 def split_pdf(pdf_filename, duplex, stackable):
     num_pages = get_page_count(pdf_filename)
@@ -133,7 +139,9 @@ def split_pdf(pdf_filename, duplex, stackable):
     colour, mono = detect_pages(pdf_filename, num_pages)
     c_file, m_file = get_file_structure(num_pages, colour, mono, duplex,
         stackable)
-    write_output_files(pdf_filename, c_file, m_file)
+    files_written = write_output_files(pdf_filename, c_file, m_file)
+
+    return files_written
 
 def main():
     parser = argparse.ArgumentParser(description="Splits a PDF into colour and "

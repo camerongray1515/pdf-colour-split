@@ -1,3 +1,5 @@
+import pdfcoloursplit
+import os
 from .config import config
 from celery import Celery
 
@@ -6,7 +8,14 @@ celery_backend = config["Celery"]["backend"]
 app = Celery("worker", broker=celery_broker, backend=celery_backend)
 
 @app.task
-def add(x, y):
-    import time
-    time.sleep(5)
-    return x+y
+def split_pdf(temp_dir, pdf_filename, duplex, stackable):
+    os.chdir(temp_dir)
+    files_written = pdfcoloursplit.split_pdf(pdf_filename, duplex, stackable)
+
+    if pdf_filename.lower().endswith(".pdf"):
+        zip_filename = pdf_filename[:-4] + ".zip"
+    else:
+        zip_filename = pdf_filename + ".zip"
+    # Create zip file here
+
+    return zip_filename
