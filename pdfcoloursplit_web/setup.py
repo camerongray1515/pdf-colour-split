@@ -18,6 +18,7 @@ def find_files(directory):
 
 package_data_files = ["config.ini"]
 package_data_files += find_files("pdfcoloursplit_web/templates")
+package_data_files += find_files("pdfcoloursplit_web/static")
 
 setup(
     name="pdfcoloursplit_web",
