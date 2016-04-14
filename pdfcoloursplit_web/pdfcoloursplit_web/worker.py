@@ -1,5 +1,6 @@
 import pdfcoloursplit
 import os
+import zipfile
 from .config import config
 from celery import Celery
 
@@ -16,6 +17,9 @@ def split_pdf(temp_dir, pdf_filename, duplex, stackable):
         zip_filename = pdf_filename[:-4] + ".zip"
     else:
         zip_filename = pdf_filename + ".zip"
-    # Create zip file here
+
+    with zipfile.ZipFile(zip_filename, "w") as z:
+        for filename in files_written:
+            z.write(filename)
 
     return zip_filename
