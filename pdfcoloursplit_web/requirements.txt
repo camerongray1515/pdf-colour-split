@@ -2,6 +2,14 @@ amqp==1.4.9
 anyjson==0.3.3
 billiard==3.3.0.23
 celery==3.1.23
+Flask==0.10.1
+itsdangerous==0.24
+Jinja2==2.8
 kombu==3.0.35
+MarkupSafe==0.23
+pdfcoloursplit==1.0
+pdfcoloursplit-web==1.0
 pytz==2016.3
+redis==2.10.5
+Werkzeug==0.11.7
 wheel==0.24.0
